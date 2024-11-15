@@ -1,81 +1,81 @@
-"use client"
+"use client";
 
-import { useFieldArray, useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useFieldArray, useForm } from "react-hook-form";
+import { z } from "zod";
+import _ from "lodash";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form"
-import { Button } from "../ui/button"
-import { createEvent, deleteEvent, updateEvent } from "@/server/actions/events"
-import { DAYS_OF_WEEK_IN_ORDER } from "@/data/constants"
-import { scheduleFormSchema } from "@/schema/schedule"
-import { timeToInt } from "@/lib/utils"
+} from "../ui/form";
+import { Button } from "../ui/button";
+
+import { DAYS_OF_WEEK_IN_ORDER } from "@/data/constants";
+import { scheduleFormSchema } from "@/schema/schedule";
+import { timeToInt } from "@/lib/utils";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select"
-import { formatTimezoneOffset } from "@/lib/formatters"
-import { Fragment, useState } from "react"
-import { Plus, X } from "lucide-react"
-import { Input } from "../ui/input"
-import { saveSchedule } from "@/server/actions/schedule"
+} from "../ui/select";
+import { formatTimezoneOffset } from "@/lib/formatters";
+import { Fragment, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { Input } from "../ui/input";
+import { saveSchedule } from "@/server/actions/schedule";
 
 type Availability = {
-  startTime: string
-  endTime: string
-  dayOfWeek: (typeof DAYS_OF_WEEK_IN_ORDER)[number]
-}
+  startTime: string;
+  endTime: string;
+  dayOfWeek: (typeof DAYS_OF_WEEK_IN_ORDER)[number];
+};
 
 export function ScheduleForm({
   schedule,
 }: {
   schedule?: {
-    timezone: string
-    availabilities: Availability[]
-  }
+    timezone: string;
+    availabilities: Availability[];
+  };
 }) {
-  const [successMessage, setSuccessMessage] = useState<string>()
+  const [successMessage, setSuccessMessage] = useState<string>();
   const form = useForm<z.infer<typeof scheduleFormSchema>>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
       timezone:
         schedule?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       availabilities: schedule?.availabilities.toSorted((a, b) => {
-        return timeToInt(a.startTime) - timeToInt(b.startTime)
+        return timeToInt(a.startTime) - timeToInt(b.startTime);
       }),
     },
-  })
+  });
 
   const {
     append: addAvailability,
     remove: removeAvailability,
     fields: availabilityFields,
-  } = useFieldArray({ name: "availabilities", control: form.control })
+  } = useFieldArray({ name: "availabilities", control: form.control });
 
-  const groupedAvailabilityFields = Object.groupBy(
+  const groupedAvailabilityFields = _.groupBy(
     availabilityFields.map((field, index) => ({ ...field, index })),
-    availability => availability.dayOfWeek
-  )
+    (availability: Availability) => availability.dayOfWeek
+  );
 
   async function onSubmit(values: z.infer<typeof scheduleFormSchema>) {
-    const data = await saveSchedule(values)
+    const data = await saveSchedule(values);
 
     if (data?.error) {
       form.setError("root", {
         message: "There was an error saving your schedule",
-      })
+      });
     } else {
-      setSuccessMessage("Schedule saved!")
+      setSuccessMessage("Schedule saved!");
     }
   }
 
@@ -106,7 +106,7 @@ export function ScheduleForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {Intl.supportedValuesOf("timeZone").map(timezone => (
+                  {Intl.supportedValuesOf("timeZone").map((timezone) => (
                     <SelectItem key={timezone} value={timezone}>
                       {timezone}
                       {` (${formatTimezoneOffset(timezone)})`}
@@ -120,7 +120,7 @@ export function ScheduleForm({
         />
 
         <div className="grid grid-cols-[auto,1fr] gap-y-6 gap-x-4">
-          {DAYS_OF_WEEK_IN_ORDER.map(dayOfWeek => (
+          {DAYS_OF_WEEK_IN_ORDER.map((dayOfWeek) => (
             <Fragment key={dayOfWeek}>
               <div className="capitalize text-sm font-semibold">
                 {dayOfWeek.substring(0, 3)}
@@ -135,7 +135,7 @@ export function ScheduleForm({
                       dayOfWeek,
                       startTime: "9:00",
                       endTime: "17:00",
-                    })
+                    });
                   }}
                 >
                   <Plus className="size-full" />
@@ -224,5 +224,5 @@ export function ScheduleForm({
         </div>
       </form>
     </Form>
-  )
+  );
 }
